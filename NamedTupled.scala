@@ -1,6 +1,7 @@
 package namedtupled
 
 import scala.quoted.*
+import scala.annotation.publicInBinary
 
 object NamedTupled {
 
@@ -21,7 +22,8 @@ object NamedTupled {
     */
   inline transparent def tupled[F](inline f: F): Any = ${ tupledImpl('f) }
 
-  private def extractInfo[F: Type](
+  @publicInBinary
+  private[namedtupled] def extractInfo[F: Type](
     f: Expr[F]
   )(
     using q: Quotes
@@ -79,7 +81,8 @@ object NamedTupled {
   }
 
   /** Produces a FunctionN with named parameters (refined apply). */
-  private def ofImpl[F: Type](
+  @publicInBinary
+  private[namedtupled] def ofImpl[F: Type](
     f: Expr[F]
   )(
     using q: Quotes
@@ -116,7 +119,8 @@ object NamedTupled {
   }
 
   /** Produces a Function1 from a named tuple. */
-  private def tupledImpl[F: Type](
+  @publicInBinary
+  private[namedtupled] def tupledImpl[F: Type](
     f: Expr[F]
   )(
     using q: Quotes
@@ -174,6 +178,15 @@ object NamedTupled {
         using function1Type.asType.asInstanceOf[Type[Any]]
       ),
     ).asExprOf[Any]
+  }
+
+}
+
+object syntax {
+
+  extension [F](inline f: F) {
+    inline transparent def named: Any = ${ NamedTupled.ofImpl('f) }
+    inline transparent def namedTupled: Any = ${ NamedTupled.tupledImpl('f) }
   }
 
 }

@@ -27,23 +27,23 @@ ivy"org.polyvariant::named-tupled:<version>"
 ## Usage
 
 ```scala
-import namedtupled.NamedTupled
+import namedtupled.syntax.*
 
 def foo(entityId: Int, userId: String): Boolean = ???
 
 // Wrap a function so that its parameters are named at the call site
-val f = NamedTupled.of(foo)
+val f = foo.named
 f(entityId = 1, userId = "hello")
 
 // Convert a function into a Function1 from a named tuple
-val g = NamedTupled.tupled(foo)
+val g = foo.namedTupled
 g((entityId = 1, userId = "hello"))
 ```
 
-### `NamedTupled.of`
+### `NamedTupled.of` / `NamedTupled.apply` / `.named`
 
 Converts a multi-parameter function `(a: A, b: B, ...) => R` into a function with named parameters, preserving the original parameter names.
 
-### `NamedTupled.tupled`
+### `NamedTupled.tupled` / `.namedTupled`
 
 Like `.tupled` but the resulting tuple type carries the parameter names from the original method. Converts a multi-parameter function into a `Function1` from a named tuple: `((a: A, b: B, ...)) => R`.
