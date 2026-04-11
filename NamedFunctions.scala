@@ -1,29 +1,29 @@
-package namedtupled
+package namedfunctions
 
 import scala.quoted.*
 import scala.annotation.publicInBinary
 
-object NamedTupled {
+object NamedFunctions {
 
   /** Converts a multi-parameter function `(a: A, b: B, ...) => R` into a function with named
     * parameters `(a: A, b: B, ...) => R`, preserving the original parameter names.
     *
-    * Usage: `NamedTupled.of(someMethod)`
+    * Usage: `NamedFunctions.of(someMethod)`
     */
   inline transparent def of[F](inline f: F): Any = ${ ofImpl('f) }
 
-  /** Alias for `of`. Allows `NamedTupled(someMethod)`. */
+  /** Alias for `of`. Allows `NamedFunctions(someMethod)`. */
   inline transparent def apply[F](inline f: F): Any = ${ ofImpl('f) }
 
   /** Like `.tupled` but the resulting tuple type carries the parameter names from the original
     * method. Converts a multi-parameter function into a `Function1` from a named tuple.
     *
-    * Usage: `NamedTupled.tupled(someMethod)` or `someMethod.namedTupled`
+    * Usage: `NamedFunctions.tupled(someMethod)` or `someMethod.namedFunctions`
     */
   inline transparent def tupled[F](inline f: F): Any = ${ tupledImpl('f) }
 
   @publicInBinary
-  private[namedtupled] def extractInfo[F: Type](
+  private[namedfunctions] def extractInfo[F: Type](
     f: Expr[F]
   )(
     using q: Quotes
@@ -82,7 +82,7 @@ object NamedTupled {
 
   /** Produces a FunctionN with named parameters (refined apply). */
   @publicInBinary
-  private[namedtupled] def ofImpl[F: Type](
+  private[namedfunctions] def ofImpl[F: Type](
     f: Expr[F]
   )(
     using q: Quotes
@@ -120,7 +120,7 @@ object NamedTupled {
 
   /** Produces a Function1 from a named tuple. */
   @publicInBinary
-  private[namedtupled] def tupledImpl[F: Type](
+  private[namedfunctions] def tupledImpl[F: Type](
     f: Expr[F]
   )(
     using q: Quotes
@@ -133,7 +133,7 @@ object NamedTupled {
     def tupleTypeFromList(types: List[TypeRepr]): TypeRepr = {
       val n = types.length
       if (n == 0)
-        report.errorAndAbort("NamedTupled requires at least one parameter")
+        report.errorAndAbort("NamedFunctions requires at least one parameter")
       AppliedType(Symbol.requiredClass(s"scala.Tuple$n").typeRef, types)
     }
 
@@ -185,8 +185,8 @@ object NamedTupled {
 object syntax {
 
   extension [F](inline f: F) {
-    inline transparent def named: Any = ${ NamedTupled.ofImpl('f) }
-    inline transparent def namedTupled: Any = ${ NamedTupled.tupledImpl('f) }
+    inline transparent def named: Any = ${ NamedFunctions.ofImpl('f) }
+    inline transparent def namedTupled: Any = ${ NamedFunctions.tupledImpl('f) }
   }
 
 }

@@ -1,10 +1,10 @@
 //> using dep org.scalameta::munit::1.2.4
 
-package namedtupled
+package namedfunctions
 
 import syntax.*
 
-class NamedTupledTest extends munit.FunSuite {
+class NamedFunctionsTest extends munit.FunSuite {
 
   def foo(entityId: Int, userId: String): Boolean = true
 
@@ -29,7 +29,7 @@ class NamedTupledTest extends munit.FunSuite {
   // }
 
   // test("tupled - multi-parameter lists") {
-  //   val g = fooMultiLists.namedTupled
+  //   val g = fooMultiLists.namedFunctions
   //   val result: Boolean = g((entityId = 1))((userId = "hello"))
   //   assert(result)
   // }
