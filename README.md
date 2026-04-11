@@ -36,7 +36,7 @@ val f = foo.named
 f(entityId = 1, userId = "hello")
 
 // Convert a function into a Function1 from a named tuple
-val g = foo.namedFunctions
+val g = foo.namedTupled
 g((entityId = 1, userId = "hello"))
 ```
 
