@@ -22,15 +22,15 @@ class NamedFunctionsTest extends munit.FunSuite {
 
   def fooMultiLists(entityId: Int)(userId: String): Boolean = true
 
-  // test("of - multi-parameter lists") {
-  //   val f = fooMultiLists.named
-  //   val result: Boolean = f(entityId = 1)(userId = "hello")
-  //   assert(result)
-  // }
+  test("of - multi-parameter lists") {
+    val f = fooMultiLists.named
+    val result: Boolean = f(entityId = 1)(userId = "hello")
+    assert(result)
+  }
 
-  // test("tupled - multi-parameter lists") {
-  //   val g = fooMultiLists.namedFunctions
-  //   val result: Boolean = g((entityId = 1))((userId = "hello"))
-  //   assert(result)
-  // }
+  test("tupled - multi-parameter lists") {
+    val g = fooMultiLists.namedTupled
+    val result: Boolean = g((entityId = 1))((userId = "hello"))
+    assert(result)
+  }
 }
