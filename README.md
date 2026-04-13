@@ -84,10 +84,10 @@ val b = "hello"
 foo.nameChecked(a, b)    // compiles — "42-hello"
 foo.nameChecked(b, a)    // also compiles — reordered to "42-hello"
 foo.nameChecked(b, x)    // compile error: unexpected: x; missing: a
-foo.nameChecked("hello") // compile error: requires plain variable references
+foo.nameChecked("hello") // compile error: requires variable references or field accesses
 ```
 
-Arguments must be plain variable references (not literals or expressions). Multiple parameter lists are supported — all arguments are passed flat:
+Arguments can be plain variable references or field accesses (e.g. `obj.field`). The last segment of the access is used as the name. Multiple parameter lists are supported — all arguments are passed flat:
 
 ```scala
 def bar(entityId: Int)(userId: String): Boolean = ???
@@ -95,6 +95,14 @@ def bar(entityId: Int)(userId: String): Boolean = ???
 val entityId = 1
 val userId = "hello"
 bar.nameChecked(entityId, userId)
+```
+
+Field accesses work too — the field name is what matters:
+
+```scala
+case class Source(a: Int, b: String)
+val src = Source(42, "hello")
+foo.nameChecked(src.a, src.b) // compiles — "42-hello"
 ```
 
 ### `.applyProduct`

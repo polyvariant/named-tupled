@@ -496,13 +496,14 @@ object NamedFunctions {
         )
     }
 
-    // Extract variable name from an argument term
+    // Extract variable or field name from an argument term
     def extractArgName(term: Term): String =
       unwrapInlined(term) match {
-        case Ident(name) => name
+        case Ident(name)       => name
+        case Select(_, name)   => name
         case other =>
           report.errorAndAbort(
-            s"nameChecked requires plain variable references as arguments, got: ${other.show}"
+            s"nameChecked requires variable references or field accesses as arguments, got: ${other.show}"
           )
       }
 

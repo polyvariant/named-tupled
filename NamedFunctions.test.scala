@@ -77,13 +77,31 @@ class NamedFunctionsTest extends munit.FunSuite {
     assert(errors.contains("nameChecked: unexpected: x; missing: s2"), errors)
   }
 
+  test("nameChecked - field access") {
+    def bar(a: Int, b: String): String = s"$a-$b"
+    case class Source(a: Int, b: String)
+    val s = Source(42, "hello")
+    val result: String = bar.nameChecked(s.a, s.b)
+    assertEquals(result, "42-hello")
+  }
+
+  test("nameChecked - field access reorders") {
+    def bar(a: Int, b: String): String = s"$a-$b"
+    case class S1(b: String)
+    case class S2(a: Int)
+    val s1 = S1("hello")
+    val s2 = S2(42)
+    val result: String = bar.nameChecked(s1.b, s2.a)
+    assertEquals(result, "42-hello")
+  }
+
   test("nameChecked - literal argument fails") {
     val errors = compileErrors("""
       import namedfunctions.syntax.*
       def foo(s: String): Boolean = true
       foo.nameChecked("hello")
     """)
-    assert(errors.contains("nameChecked requires plain variable references"), errors)
+    assert(errors.contains("nameChecked requires variable references or field accesses"), errors)
   }
 
   test("nameChecked - multi-param lists") {
