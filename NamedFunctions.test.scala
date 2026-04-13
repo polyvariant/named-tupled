@@ -1,4 +1,4 @@
-//> using dep org.scalameta::munit::1.2.4
+//> using dep org.scalameta::munit::1.3.0
 
 package namedfunctions
 
