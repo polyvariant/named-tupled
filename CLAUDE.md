@@ -28,15 +28,18 @@ Single-module project. Everything is in the `namedfunctions` package.
 - Trailing commas on multi-line
 - `@publicInBinary private[namedfunctions]` on internal macro impl methods
 - Public API: `inline transparent def` methods in `NamedFunctions` object
-- Syntax extensions: `object syntax` with `extension [F](inline f: F)`
+- Syntax API: `object syntax` with `extension [F](inline f: F)` plus standalone helpers like `namedTuple`
 - Tests use munit (`munit.FunSuite`)
 
 ## Architecture
 
-Core pattern for each feature:
+Core pattern for function-transforming features:
 1. Public `inline transparent def` in `NamedFunctions` object delegates to `${ implMethod('args) }`
 2. `@publicInBinary private[namedfunctions]` impl method does the macro work
 3. Extension method in `object syntax` calls the same impl
+
+Standalone syntax helpers may skip step 1 or 3 depending on where they are exposed. For example,
+`syntax.namedTuple` delegates directly to its macro implementation.
 
 Key shared infrastructure:
 - `extractInfo[F]` - extracts parameter clauses (names + types) and return type from a function expression

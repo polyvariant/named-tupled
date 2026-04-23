@@ -20,6 +20,53 @@ class NamedFunctionsTest extends munit.FunSuite {
     assert(result)
   }
 
+  test("namedTuple composes with namedTupled") {
+    val entityId = 1
+    val userId = "hello"
+    val result: Boolean = foo.namedTupled(namedTuple(entityId, userId))
+    assert(result)
+  }
+
+  test("namedTuple composes with namedTupled using field selects") {
+    case class Params(entityId: Int, userId: String)
+    val params = Params(1, "hello")
+    val result: Boolean = foo.namedTupled(namedTuple(params.entityId, params.userId))
+    assert(result)
+  }
+
+  test("namedTuple - variables") {
+    val entityId = 1
+    val userId = "hello"
+    val result = namedTuple(entityId, userId)
+    assertEquals(result.entityId, 1)
+    assertEquals(result.userId, "hello")
+  }
+
+  test("namedTuple - field access") {
+    case class Params(entityId: Int, userId: String)
+    val params = Params(1, "hello")
+    val result = namedTuple(params.entityId, params.userId)
+    assertEquals(result.entityId, 1)
+    assertEquals(result.userId, "hello")
+  }
+
+  test("namedTuple - duplicate names fail") {
+    val errors = compileErrors("""
+      import namedfunctions.syntax.*
+      val entityId = 1
+      namedTuple(entityId, entityId)
+    """)
+    assert(errors.contains("namedTuple: duplicate argument names: entityId"), errors)
+  }
+
+  test("namedTuple - literal argument fails") {
+    val errors = compileErrors("""
+      import namedfunctions.syntax.*
+      namedTuple("hello")
+    """)
+    assert(errors.contains("namedTuple requires variable references or field accesses"), errors)
+  }
+
   def fooMultiLists(entityId: Int)(userId: String): Boolean = true
 
   test("of - multi-parameter lists") {

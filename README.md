@@ -9,6 +9,11 @@ import namedfunctions.syntax.*
 
 def greet(name: String, age: Int): String = s"$name is $age"
 
+// namedTuple(...) — build a named tuple from local names
+val age = 30
+val name = "Alice"
+val nt = namedTuple(name, age)
+
 // .named — named parameters at call site
 val f = greet.named
 f(name = "Alice", age = 30) // "Alice is 30"
@@ -61,6 +66,10 @@ import namedfunctions.syntax.*
 
 def foo(entityId: Int, userId: String): Boolean = ???
 
+val entityId = 1
+val userId = "hello"
+val params = namedTuple(entityId, userId)
+
 // Wrap a function so that its parameters are named at the call site
 val f = foo.named
 f(entityId = 1, userId = "hello")
@@ -96,6 +105,19 @@ Converts a multi-parameter function `(a: A, b: B, ...) => R` into a function wit
 ### `NamedFunctions.tupled` / `.namedTupled`
 
 Like `.tupled` but the resulting tuple type carries the parameter names from the original method. Converts a multi-parameter function into a `Function1` from a named tuple: `((a: A, b: B, ...)) => R`.
+
+### `syntax.namedTuple`
+
+Builds a named tuple directly from variable references or field accesses by using the final name segment as the label:
+
+```scala
+import namedfunctions.syntax.*
+
+val a = 42
+val b = "hello"
+
+namedTuple(a, b) // (a = 42, b = "hello")
+```
 
 ### `NamedFunctions.untupled` / `.namedUntupled`
 

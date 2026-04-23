@@ -22,6 +22,12 @@ object NamedFunctions {
     */
   inline transparent def tupled[F](inline f: F): Any = ${ tupledImpl('f) }
 
+  /** Builds a named tuple from variables or field accesses by using their names as labels.
+    *
+    * Usage: `NamedFunctions.namedTuple(foo, bar)` which expands to `(foo = foo, bar = bar)`.
+    */
+  inline transparent def namedTuple(inline args: Any*): Any = ${ namedTupleImpl('args) }
+
   // A parameter clause: (names, types)
   // FuncInfo: (clauses, resultType)
 
@@ -242,6 +248,91 @@ object NamedFunctions {
       TypeRepr.of[NamedTuple.NamedTuple],
       List(namesTupleType, valuesTupleType),
     )
+  }
+
+  @publicInBinary
+  private[namedfunctions] def unwrapInlined(
+    using q: Quotes
+  )(
+    term: q.reflect.Term
+  ): q.reflect.Term = {
+    import q.reflect.*
+    term match {
+      case Inlined(_, _, inner) => unwrapInlined(inner)
+      case other                => other
+    }
+  }
+
+  @publicInBinary
+  private[namedfunctions] def unpackVarargs(
+    using q: Quotes
+  )(
+    args: Expr[Seq[Any]],
+    methodName: String,
+  ): List[q.reflect.Term] = {
+    import q.reflect.*
+    unwrapInlined(args.asTerm) match {
+      case Typed(Repeated(elems, _), _) => elems
+      case Repeated(elems, _)           => elems
+      case other                        =>
+        report.errorAndAbort(
+          s"$methodName: unexpected args tree shape: ${other.show(
+              using Printer.TreeStructure
+            )}"
+        )
+    }
+  }
+
+  @publicInBinary
+  private[namedfunctions] def extractArgName(
+    using q: Quotes
+  )(
+    term: q.reflect.Term,
+    methodName: String,
+  ): String = {
+    import q.reflect.*
+    unwrapInlined(term) match {
+      case Ident(name)     => name
+      case Select(_, name) => name
+      case other           =>
+        report.errorAndAbort(
+          s"$methodName requires variable references or field accesses as arguments, got: ${other.show}"
+        )
+    }
+  }
+
+  @publicInBinary
+  private[namedfunctions] def namedTupleImpl(
+    args: Expr[Seq[Any]]
+  )(
+    using q: Quotes
+  ): Expr[Any] = {
+    import q.reflect.*
+
+    val argTerms = unpackVarargs(args, "namedTuple")
+    if (argTerms.isEmpty)
+      report.errorAndAbort("namedTuple requires at least one argument")
+
+    val argNames = argTerms.map(extractArgName(_, "namedTuple"))
+    val duplicates = argNames.groupBy(identity).collect { case (n, vs) if vs.length > 1 => n }.toList
+    if (duplicates.nonEmpty)
+      report.errorAndAbort(s"namedTuple: duplicate argument names: ${duplicates.mkString(", ")}")
+
+    val argTypes = argTerms.map(_.tpe.widenTermRefByName)
+    val tupleModule = Symbol.requiredModule(s"scala.Tuple${argTerms.length}")
+    val tupleApply = tupleModule.methodMember("apply").head
+    val tuple = Ref(tupleModule)
+      .select(tupleApply)
+      .appliedToTypes(argTypes)
+      .appliedToArgs(argTerms)
+
+    val ntType = namedTupleType(argNames, argTypes)
+    Typed(
+      tuple,
+      TypeTree.of(
+        using ntType.asType.asInstanceOf[Type[Any]]
+      ),
+    ).asExprOf[Any]
   }
 
   /** Produces a Function1 from a named tuple. */
@@ -514,45 +605,16 @@ object NamedFunctions {
     import q.reflect.*
 
     val (clauses, resultType) = extractInfo(f)
-
-    // Unpack varargs from the Repeated node
-    def unwrapInlined(term: Term): Term =
-      term match {
-        case Inlined(_, _, inner) => unwrapInlined(inner)
-        case other                => other
-      }
-
-    val argTerms: List[Term] =
-      unwrapInlined(args.asTerm) match {
-        case Typed(Repeated(elems, _), _) => elems
-        case Repeated(elems, _)           => elems
-        case other                        =>
-          report.errorAndAbort(
-            s"nameChecked: unexpected args tree shape: ${other.show(
-                using Printer.TreeStructure
-              )}"
-          )
-      }
-
-    // Extract variable or field name from an argument term
-    def extractArgName(term: Term): String =
-      unwrapInlined(term) match {
-        case Ident(name)     => name
-        case Select(_, name) => name
-        case other           =>
-          report.errorAndAbort(
-            s"nameChecked requires variable references or field accesses as arguments, got: ${other.show}"
-          )
-      }
+    val argTerms = unpackVarargs(args, "nameChecked")
 
     val flatParamNames = clauses.flatMap(_._1)
     val argsByName: Map[String, Term] =
       argTerms.map { term =>
-        val name = extractArgName(term)
+        val name = extractArgName(term, "nameChecked")
         name -> term
       }.toMap
 
-    val argNames = argTerms.map(extractArgName)
+    val argNames = argTerms.map(extractArgName(_, "nameChecked"))
 
     if (argsByName.size != argTerms.length) {
       val dupes = argNames.groupBy(identity).collect { case (n, vs) if vs.length > 1 => n }
@@ -633,8 +695,9 @@ object NamedFunctions {
   }
 
 }
-
 object syntax {
+
+  inline transparent def namedTuple(inline args: Any*): Any = ${ NamedFunctions.namedTupleImpl('args) }
 
   extension [F](inline f: F) {
     inline transparent def named: Any = ${ NamedFunctions.ofImpl('f) }
