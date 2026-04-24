@@ -2,6 +2,9 @@
 
 package namedfunctions
 
+import cats.data.NonEmptyChain
+import cats.data.EitherNec
+import cats.syntax.all.*
 import syntax.*
 
 class NamedFunctionsTest extends munit.FunSuite {
@@ -10,27 +13,27 @@ class NamedFunctionsTest extends munit.FunSuite {
 
   test("of - named-parameter function") {
     val f = foo.named
-    val result: Boolean = f(entityId = 1, userId = "hello")
+    val result = f(entityId = 1, userId = "hello")
     assert(result)
   }
 
   test("tupled - Function1 from named tuple") {
     val g = foo.namedTupled
-    val result: Boolean = g((entityId = 1, userId = "hello"))
+    val result = g((entityId = 1, userId = "hello"))
     assert(result)
   }
 
   test("namedTuple composes with namedTupled") {
     val entityId = 1
     val userId = "hello"
-    val result: Boolean = foo.namedTupled(namedTuple(entityId, userId))
+    val result = foo.namedTupled(namedTuple(entityId, userId))
     assert(result)
   }
 
   test("namedTuple composes with namedTupled using field selects") {
     case class Params(entityId: Int, userId: String)
     val params = Params(1, "hello")
-    val result: Boolean = foo.namedTupled(namedTuple(params.entityId, params.userId))
+    val result = foo.namedTupled(namedTuple(params.entityId, params.userId))
     assert(result)
   }
 
@@ -71,13 +74,13 @@ class NamedFunctionsTest extends munit.FunSuite {
 
   test("of - multi-parameter lists") {
     val f = fooMultiLists.named
-    val result: Boolean = f(entityId = 1)(userId = "hello")
+    val result = f(entityId = 1)(userId = "hello")
     assert(result)
   }
 
   test("tupled - multi-parameter lists") {
     val g = fooMultiLists.namedTupled
-    val result: Boolean = g((entityId = 1))((userId = "hello"))
+    val result = g((entityId = 1))((userId = "hello"))
     assert(result)
   }
 
@@ -85,14 +88,14 @@ class NamedFunctionsTest extends munit.FunSuite {
     val tupled: ((entityId: Int, userId: String)) => Boolean =
       t => t.entityId > 0 && t.userId.nonEmpty
     val f = tupled.namedUntupled
-    val result: Boolean = f(entityId = 1, userId = "hello")
+    val result = f(entityId = 1, userId = "hello")
     assert(result)
   }
 
   test("untupled roundtrip - tupled then untupled") {
     val g = foo.namedTupled
     val f = g.namedUntupled
-    val result: Boolean = f(entityId = 1, userId = "hello")
+    val result = f(entityId = 1, userId = "hello")
     assert(result)
   }
 
@@ -101,7 +104,7 @@ class NamedFunctionsTest extends munit.FunSuite {
   test("nameChecked - matching names compiles and runs") {
     val entityId = 1
     val userId = "hello"
-    val result: Boolean = foo.nameChecked(entityId, userId)
+    val result = foo.nameChecked(entityId, userId)
     assert(result)
   }
 
@@ -109,7 +112,7 @@ class NamedFunctionsTest extends munit.FunSuite {
     def bar(a: Int, b: String): String = s"$a-$b"
     val b = "hello"
     val a = 42
-    val result: String = bar.nameChecked(b, a)
+    val result = bar.nameChecked(b, a)
     assertEquals(result, "42-hello")
   }
 
@@ -128,7 +131,7 @@ class NamedFunctionsTest extends munit.FunSuite {
     def bar(a: Int, b: String): String = s"$a-$b"
     case class Source(a: Int, b: String)
     val s = Source(42, "hello")
-    val result: String = bar.nameChecked(s.a, s.b)
+    val result = bar.nameChecked(s.a, s.b)
     assertEquals(result, "42-hello")
   }
 
@@ -138,7 +141,7 @@ class NamedFunctionsTest extends munit.FunSuite {
     case class S2(a: Int)
     val s1 = S1("hello")
     val s2 = S2(42)
-    val result: String = bar.nameChecked(s1.b, s2.a)
+    val result = bar.nameChecked(s1.b, s2.a)
     assertEquals(result, "42-hello")
   }
 
@@ -154,7 +157,7 @@ class NamedFunctionsTest extends munit.FunSuite {
   test("nameChecked - multi-param lists") {
     val entityId = 1
     val userId = "hello"
-    val result: Boolean = fooMultiLists.nameChecked(entityId, userId)
+    val result = fooMultiLists.nameChecked(entityId, userId)
     assert(result)
   }
 
@@ -163,7 +166,7 @@ class NamedFunctionsTest extends munit.FunSuite {
   test("applyProduct - case class with matching fields") {
     case class Params(entityId: Int, userId: String)
     val params = Params(1, "hello")
-    val result: Boolean = foo.applyProduct(params)
+    val result = foo.applyProduct(params)
     assert(result)
   }
 
@@ -171,7 +174,7 @@ class NamedFunctionsTest extends munit.FunSuite {
     def bar(a: Int, b: String): String = s"$a-$b"
     case class Params(b: String, a: Int)
     val params = Params("hello", 42)
-    val result: String = bar.applyProduct(params)
+    val result = bar.applyProduct(params)
     assertEquals(result, "42-hello")
   }
 
@@ -179,7 +182,7 @@ class NamedFunctionsTest extends munit.FunSuite {
     def bar(entityId: Int): Boolean = entityId > 0
     case class Params(entityId: Int, extra: String)
     val params = Params(1, "unused")
-    val result: Boolean = bar.applyProduct(params)
+    val result = bar.applyProduct(params)
     assert(result)
   }
 
@@ -196,7 +199,7 @@ class NamedFunctionsTest extends munit.FunSuite {
   test("applyProduct - multi-param lists") {
     case class Params(entityId: Int, userId: String)
     val params = Params(1, "hello")
-    val result: Boolean = fooMultiLists.applyProduct(params)
+    val result = fooMultiLists.applyProduct(params)
     assert(result)
   }
 
@@ -245,7 +248,7 @@ class NamedFunctionsTest extends munit.FunSuite {
   test("named then applyProduct") {
     def bar(a: Int, b: String): String = s"$a-$b"
     case class Params(b: String, a: Int)
-    val result: String = bar.named.applyProduct(Params("hello", 42))
+    val result = bar.named.applyProduct(Params("hello", 42))
     assertEquals(result, "42-hello")
   }
 
@@ -253,14 +256,14 @@ class NamedFunctionsTest extends munit.FunSuite {
     def bar(a: Int, b: String): String = s"$a-$b"
     val a = 42
     val b = "hello"
-    val result: String = bar.named.nameChecked(a, b)
+    val result = bar.named.nameChecked(a, b)
     assertEquals(result, "42-hello")
   }
 
   test("namedTupled then namedUntupled then applyProduct") {
     def bar(a: Int, b: String): String = s"$a-$b"
     case class Params(b: String, a: Int)
-    val result: String = bar.namedTupled.namedUntupled.applyProduct(Params("hello", 42))
+    val result = bar.namedTupled.namedUntupled.applyProduct(Params("hello", 42))
     assertEquals(result, "42-hello")
   }
 
@@ -268,7 +271,37 @@ class NamedFunctionsTest extends munit.FunSuite {
     def bar(a: Int, b: String): String = s"$a-$b"
     val b = "hello"
     val a = 42
-    val result: String = bar.namedTupled.namedUntupled.nameChecked(b, a)
+    val result = bar.namedTupled.namedUntupled.nameChecked(b, a)
     assertEquals(result, "42-hello")
+  }
+
+  test("cats namedTupled - preserves named tuple labels") {
+    import catssyntax.*
+
+    val result =
+      ((entityId = Option(1), userId = Option("hello"))).namedTupled
+
+    assertEquals(result, Some((entityId = 1, userId = "hello")))
+  }
+
+  test("cats namedMapN - works with namedTupled functions") {
+    import catssyntax.*
+
+    val result =
+      ((entityId = Option(1), userId = Option("hello"))).namedMapN(NamedFunctions.tupled(foo))
+
+    assertEquals(result, Some(true))
+  }
+
+  test("cats namedParMapN - uses cats Parallel instances") {
+    import catssyntax.*
+
+    type V[A] = EitherNec[String, A]
+
+    val result =
+      ((entityId = "bad id".leftNec[Int], userId = "bad user".leftNec[String]))
+        .namedParMapN(NamedFunctions.tupled(foo))
+
+    assertEquals(result, Left(NonEmptyChain("bad id", "bad user")))
   }
 }

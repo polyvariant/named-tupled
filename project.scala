@@ -1,5 +1,6 @@
 //> using scala 3.7.0
 //> using options -no-indent
+//> using dep org.typelevel::cats-core:2.13.0
 
 //> using publish.computeVersion git:tag
 //> using publish.developers "kubukoz|Jakub Kozłowski|https://github.com/kubukoz"
