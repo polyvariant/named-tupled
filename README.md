@@ -198,6 +198,25 @@ foo.named.nameChecked(a, b) // "42-hello"
 foo.namedTupled.namedUntupled.applyProduct(Params("hello", 42)) // "42-hello"
 ```
 
+## Cats integration
+
+The cats-based utilities live behind a separate import so they can move to a separate module later:
+
+```scala
+import namedfunctions.syntax.*
+import namedfunctions.catssyntax.*
+
+def foo(entityId: Int, userId: String): Boolean = ???
+
+((entityId = Option(1), userId = Option("hello"))).namedTupled
+// Some((entityId = 1, userId = "hello"))
+
+((entityId = Option(1), userId = Option("hello"))).namedMapN(foo.namedTupled)
+// Some(true)
+
+((entityId = Option(1), userId = Option("hello"))).namedParMapN(foo.namedTupled)
+```
+
 ## Limitations
 
 All features require the macro to extract parameter names from the call site's AST. This works with method references (`obj.method`), eta-expanded methods, and case class constructors (`Foo.apply`), but **not with function values stored in a `val`**:
